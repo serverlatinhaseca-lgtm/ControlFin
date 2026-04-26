@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  database:
+    image: postgres:16-alpine
+    container_name: controlfin_database
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-controlfin}
+      POSTGRES_USER: ${POSTGRES_USER:-controlfin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_controlfin}
+    volumes:
+      - controlfin_postgres_data:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - controlfin_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: controlfin_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3001}
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      database:
+        condition: service_healthy
+    expose:
+      - "3001"
+    networks:
+      - controlfin_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: controlfin_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - controlfin_network
+
+volumes:
+  controlfin_postgres_data:
+
+networks:
+  controlfin_network:
+    driver: bridge
