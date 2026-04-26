@@ -30,7 +30,7 @@ services:
       - .env
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      PORT: ${PORT:-3001}
+      PORT: 3001
       DATABASE_URL: ${DATABASE_URL}
     depends_on:
       database:
