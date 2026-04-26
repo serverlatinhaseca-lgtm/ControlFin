@@ -4,6 +4,20 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
+const { healthCheck } = require("./db");
+const authRoutes = require("./routes/auth");
+const setupRoutes = require("./routes/setup");
+const themeRoutes = require("./routes/theme");
+const usersRoutes = require("./routes/users");
+const customersRoutes = require("./routes/customers");
+const dashboardRoutes = require("./routes/dashboard");
+const financeRoutes = require("./routes/finance");
+const chargesRoutes = require("./routes/charges");
+const invoicesRoutes = require("./routes/invoices");
+const tasksRoutes = require("./routes/tasks");
+const remindersRoutes = require("./routes/reminders");
+const contazulRoutes = require("./routes/contazulAuth");
+
 const app = express();
 const port = Number(process.env.PORT) || 3001;
 const frontendUrl = process.env.FRONTEND_URL || "http://localhost";
@@ -15,25 +29,57 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
 
-app.get("/api/health", (request, response) => {
-  response.status(200).json({
-    status: "ok",
-    service: "controlfin-api"
-  });
+app.get("/api/health", async (request, response) => {
+  try {
+    await healthCheck();
+
+    return response.status(200).json({
+      status: "ok",
+      service: "controlfin-api",
+      database: "ok"
+    });
+  } catch (error) {
+    return response.status(200).json({
+      status: "ok",
+      service: "controlfin-api",
+      database: "unavailable"
+    });
+  }
 });
 
-app.get("/api/setup/status", (request, response) => {
-  response.status(200).json({
-    configured: false,
-    contazul_configured: false
-  });
-});
+app.use("/api/auth", authRoutes);
+app.use("/api/setup", setupRoutes);
+app.use("/api/theme", themeRoutes);
+app.use("/api/users", usersRoutes);
+app.use("/api/customers", customersRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/finance", financeRoutes);
+app.use("/api/charges", chargesRoutes);
+app.use("/api/invoices", invoicesRoutes);
+app.use("/api/tasks", tasksRoutes);
+app.use("/api/reminders", remindersRoutes);
+app.use("/api/contazul", contazulRoutes);
 
-app.use((request, response) => {
-  response.status(404).json({
+app.use("/api", (request, response) => {
+  return response.status(404).json({
     message: "Rota não encontrada"
+  });
+});
+
+app.use((error, request, response, next) => {
+  const statusCode = Number(error.statusCode || error.status || 500);
+  const safeStatusCode = statusCode >= 400 && statusCode <= 599 ? statusCode : 500;
+  const message = safeStatusCode === 500 ? "Erro interno do servidor." : error.message;
+
+  console.error("[ControlFin API]", {
+    message: error.message,
+    stack: error.stack
+  });
+
+  return response.status(safeStatusCode).json({
+    message
   });
 });
 
