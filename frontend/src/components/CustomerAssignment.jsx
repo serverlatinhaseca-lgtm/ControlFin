@@ -26,13 +26,13 @@ export default function CustomerAssignment() {
     setError("");
 
     try {
-      const [customersResponse, collectorsResponse] = await Promise.all([
+      const [customersResponse, usersResponse] = await Promise.all([
         api.get("/customers/assignable"),
-        api.get("/users/collectors")
+        api.get("/auth/users")
       ]);
 
       setCustomers(asArray(customersResponse.data));
-      setCollectors(asArray(collectorsResponse.data));
+      setCollectors(asArray(usersResponse.data).filter((user) => user.profile === "COBRADOR_ATENDENTE"));
     } catch (loadError) {
       setError(getErrorMessage(loadError, "Nao foi possivel carregar clientes para atribuicao."));
     } finally {
