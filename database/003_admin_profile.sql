@@ -2,6 +2,10 @@ BEGIN;
 
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_profile_check;
 
+UPDATE users
+SET profile = 'COBRADOR_ATENDENTE'
+WHERE profile = 'COBRADOR';
+
 DO $$
 DECLARE
     profile_constraint_name text;
@@ -30,9 +34,12 @@ ALTER TABLE users
         )
     );
 
-SELECT setval('users_id_seq', GREATEST(COALESCE((SELECT MAX(id) FROM users), 0), 5), true);
+DELETE FROM users
+WHERE email = 'admin@controlfin.local'
+  AND id <> 6;
 
 INSERT INTO users (
+    id,
     name,
     email,
     password_hash,
@@ -42,23 +49,25 @@ INSERT INTO users (
     created_at,
     updated_at
 ) VALUES (
+    6,
     'Usuário Admin',
     'admin@controlfin.local',
-    '$2b$10$pt7oMyx/n9Vcyk0zHtIE3u/apJJw5YUWJ40QCsJKl9ViQHmH.eI0G',
+    '$2a$10$8PD4NA.K4C/ont.GR5dFe.qJEomgTlSg2WYRIL2U8ZO5BC2vDuJT6',
     'ADMIN',
     NULL,
     'dark',
     now(),
     now()
 )
-ON CONFLICT (email) DO UPDATE SET
+ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
+    email = EXCLUDED.email,
     password_hash = EXCLUDED.password_hash,
     profile = EXCLUDED.profile,
     company_id = EXCLUDED.company_id,
     theme_mode = EXCLUDED.theme_mode,
     updated_at = now();
 
-SELECT setval('users_id_seq', COALESCE((SELECT MAX(id) FROM users), 1), true);
+SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
 
 COMMIT;
