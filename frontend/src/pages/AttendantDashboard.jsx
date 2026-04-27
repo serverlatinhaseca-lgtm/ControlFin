@@ -67,6 +67,12 @@ export default function AttendantDashboard({ embedded = false }) {
 
   async function createTask(event) {
     event.preventDefault();
+    if (!taskForm.assigned_to) {
+      setError("Selecione um responsável para o pedido.");
+      setMessage("");
+      return;
+    }
+
     setSavingTask(true);
     setError("");
     setMessage("");
@@ -74,7 +80,7 @@ export default function AttendantDashboard({ embedded = false }) {
     try {
       await api.post("/tasks", {
         customer_id: Number(taskForm.customer_id),
-        assigned_to: taskForm.assigned_to ? Number(taskForm.assigned_to) : null,
+        assigned_to: Number(taskForm.assigned_to),
         delivery_date: taskForm.delivery_date || null,
         items: taskForm.items,
         total_value: Number(taskForm.total_value || 0)
@@ -91,13 +97,19 @@ export default function AttendantDashboard({ embedded = false }) {
 
   async function createReminder(event) {
     event.preventDefault();
+    if (!reminderForm.to_user_id) {
+      setError("Selecione um usuário de destino.");
+      setMessage("");
+      return;
+    }
+
     setSavingReminder(true);
     setError("");
     setMessage("");
 
     try {
       await api.post("/reminders", Object.assign({}, reminderForm, {
-        to_user_id: reminderForm.to_user_id ? Number(reminderForm.to_user_id) : null
+        to_user_id: Number(reminderForm.to_user_id)
       }));
       setReminderForm(emptyReminder);
       setMessage("Recordatorio criado com sucesso.");
@@ -143,9 +155,9 @@ export default function AttendantDashboard({ embedded = false }) {
             </select>
           </label>
           <label>
-            <span className="mb-2 block text-sm font-bold text-[color:var(--muted)]">Responsavel opcional</span>
-            <select className="input" value={taskForm.assigned_to} onChange={(event) => updateTask("assigned_to", event.target.value)}>
-              <option value="">Sem responsavel</option>
+            <span className="mb-2 block text-sm font-bold text-[color:var(--muted)]">Responsavel</span>
+            <select className="input" value={taskForm.assigned_to} onChange={(event) => updateTask("assigned_to", event.target.value)} required>
+              <option value="">Selecione</option>
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.name}
@@ -181,7 +193,7 @@ export default function AttendantDashboard({ embedded = false }) {
           </label>
           <label>
             <span className="mb-2 block text-sm font-bold text-[color:var(--muted)]">Para usuario</span>
-            <select className="input" value={reminderForm.to_user_id} onChange={(event) => updateReminder("to_user_id", event.target.value)}>
+            <select className="input" value={reminderForm.to_user_id} onChange={(event) => updateReminder("to_user_id", event.target.value)} required>
               <option value="">Selecione</option>
               {users.map((user) => (
                 <option key={user.id} value={user.id}>

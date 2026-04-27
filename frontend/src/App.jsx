@@ -99,6 +99,7 @@ function AssignmentPage() {
 
 export default function App() {
   const { isAuthenticated, loading } = useAuth();
+  const allProfiles = ["ADMIN", "FINANCEIRO", "COBRADOR_ATENDENTE", "DIRETORA_COBRANCA", "DIRETOR_GERAL", "ATENDENTE"];
 
   if (loading) {
     return <Loading fullScreen message="Inicializando ControlFin" />;
@@ -116,17 +117,17 @@ export default function App() {
         }
       >
         <Route index element={<HomeRedirect />} />
-        <Route path="dashboard" element={<DashboardRouter />} />
-        <Route path="financeiro" element={<FinanceDashboard />} />
-        <Route path="cobranca" element={<ChargesPage />} />
-        <Route path="clientes" element={<CustomersPage />} />
-        <Route path="atribuicao-clientes" element={<AssignmentPage />} />
-        <Route path="atendimento" element={<AttendantDashboard />} />
-        <Route path="recordatorios" element={<RemindersPage />} />
-        <Route path="relatorios" element={<ReportsPage />} />
-        <Route path="configuracoes" element={<SettingsPage />} />
-        <Route path="minha-conta" element={<MyAccountPage />} />
-        <Route path="financeiro/tarefas" element={<FinanceTasksPage />} />
+        <Route path="dashboard" element={<ProtectedRoute roles={["ADMIN", "DIRETOR_GERAL", "COBRADOR_ATENDENTE"]}><DashboardRouter /></ProtectedRoute>} />
+        <Route path="financeiro" element={<ProtectedRoute roles={["ADMIN", "FINANCEIRO", "DIRETOR_GERAL", "COBRADOR_ATENDENTE"]}><FinanceDashboard /></ProtectedRoute>} />
+        <Route path="cobranca" element={<ProtectedRoute roles={["ADMIN", "COBRADOR_ATENDENTE", "DIRETORA_COBRANCA", "DIRETOR_GERAL"]}><ChargesPage /></ProtectedRoute>} />
+        <Route path="clientes" element={<ProtectedRoute roles={["ADMIN", "FINANCEIRO", "DIRETOR_GERAL"]}><CustomersPage /></ProtectedRoute>} />
+        <Route path="atribuicao-clientes" element={<ProtectedRoute roles={["ADMIN", "FINANCEIRO", "COBRADOR_ATENDENTE", "DIRETOR_GERAL"]}><AssignmentPage /></ProtectedRoute>} />
+        <Route path="atendimento" element={<ProtectedRoute roles={["ADMIN", "COBRADOR_ATENDENTE", "ATENDENTE"]}><AttendantDashboard /></ProtectedRoute>} />
+        <Route path="recordatorios" element={<ProtectedRoute roles={["ADMIN", "COBRADOR_ATENDENTE", "ATENDENTE"]}><RemindersPage /></ProtectedRoute>} />
+        <Route path="relatorios" element={<ProtectedRoute roles={["ADMIN", "FINANCEIRO", "DIRETORA_COBRANCA", "DIRETOR_GERAL"]}><ReportsPage /></ProtectedRoute>} />
+        <Route path="configuracoes" element={<ProtectedRoute roles={["ADMIN"]}><SettingsPage /></ProtectedRoute>} />
+        <Route path="minha-conta" element={<ProtectedRoute roles={allProfiles}><MyAccountPage /></ProtectedRoute>} />
+        <Route path="financeiro/tarefas" element={<ProtectedRoute roles={["ADMIN", "FINANCEIRO", "DIRETOR_GERAL"]}><FinanceTasksPage /></ProtectedRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -51,13 +51,19 @@ export default function RemindersPage() {
 
   async function createReminder(event) {
     event.preventDefault();
+    if (!form.to_user_id) {
+      setError("Selecione um usuário de destino.");
+      setMessage("");
+      return;
+    }
+
     setSaving(true);
     setError("");
     setMessage("");
 
     try {
       await api.post("/reminders", Object.assign({}, form, {
-        to_user_id: form.to_user_id ? Number(form.to_user_id) : null
+        to_user_id: Number(form.to_user_id)
       }));
       setForm(emptyForm);
       setMessage("Recordatorio criado com sucesso.");
@@ -109,7 +115,7 @@ export default function RemindersPage() {
           </label>
           <label>
             <span className="mb-2 block text-sm font-bold text-[color:var(--muted)]">Para usuario</span>
-            <select className="input" value={form.to_user_id} onChange={(event) => updateForm("to_user_id", event.target.value)}>
+            <select className="input" value={form.to_user_id} onChange={(event) => updateForm("to_user_id", event.target.value)} required>
               <option value="">Selecione</option>
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
