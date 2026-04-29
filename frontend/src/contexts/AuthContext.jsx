@@ -37,6 +37,14 @@ export function AuthProvider({ children }) {
     setUser(nextUser);
   }, []);
 
+  const completeLogin = useCallback(
+    (nextToken, nextUser) => {
+      persistSession(nextToken, nextUser);
+      return nextUser;
+    },
+    [persistSession]
+  );
+
   const refreshMe = useCallback(async () => {
     const response = await api.get("/auth/me");
     const nextUser = response.data.user || response.data;
@@ -107,16 +115,13 @@ export function AuthProvider({ children }) {
     clearSession();
   }, [clearSession]);
 
-  const updateUser = useCallback(
-    async (payload) => {
-      const response = await api.put("/auth/me", payload);
-      const nextUser = response.data.user || response.data;
-      window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
-      setUser(nextUser);
-      return nextUser;
-    },
-    []
-  );
+  const updateUser = useCallback(async (payload) => {
+    const response = await api.put("/auth/me", payload);
+    const nextUser = response.data.user || response.data;
+    window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+    setUser(nextUser);
+    return nextUser;
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -124,12 +129,13 @@ export function AuthProvider({ children }) {
       token,
       loading,
       login,
+      completeLogin,
       logout,
       refreshMe,
       updateUser,
       isAuthenticated: Boolean(token && user)
     }),
-    [loading, login, logout, refreshMe, token, updateUser, user]
+    [completeLogin, loading, login, logout, refreshMe, token, updateUser, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

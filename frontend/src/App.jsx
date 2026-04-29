@@ -5,6 +5,7 @@ import Layout from "./components/Layout.jsx";
 import Loading from "./components/Loading.jsx";
 import CustomerAssignment from "./components/CustomerAssignment.jsx";
 import Login from "./pages/Login.jsx";
+import UserSelector from "./pages/UserSelector.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import FinanceDashboard from "./pages/FinanceDashboard.jsx";
 import CollectorAttendantDashboard from "./pages/CollectorAttendantDashboard.jsx";
@@ -99,7 +100,6 @@ function AssignmentPage() {
 
 export default function App() {
   const { isAuthenticated, loading } = useAuth();
-  const allProfiles = ["ADMIN", "FINANCEIRO", "COBRADOR_ATENDENTE", "DIRETORA_COBRANCA", "DIRETOR_GERAL", "ATENDENTE"];
 
   if (loading) {
     return <Loading fullScreen message="Inicializando ControlFin" />;
@@ -107,7 +107,9 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <Login mode="common" />} />
+      <Route path="/admin-login" element={isAuthenticated ? <Navigate to="/" replace /> : <Login mode="admin" />} />
+      <Route path="/selecionar-usuario" element={isAuthenticated ? <Navigate to="/" replace /> : <UserSelector />} />
       <Route
         path="/"
         element={
@@ -117,17 +119,17 @@ export default function App() {
         }
       >
         <Route index element={<HomeRedirect />} />
-        <Route path="dashboard" element={<ProtectedRoute roles={["ADMIN", "DIRETOR_GERAL", "COBRADOR_ATENDENTE"]}><DashboardRouter /></ProtectedRoute>} />
-        <Route path="financeiro" element={<ProtectedRoute roles={["ADMIN", "FINANCEIRO", "DIRETOR_GERAL", "COBRADOR_ATENDENTE"]}><FinanceDashboard /></ProtectedRoute>} />
-        <Route path="cobranca" element={<ProtectedRoute roles={["ADMIN", "COBRADOR_ATENDENTE", "DIRETORA_COBRANCA", "DIRETOR_GERAL"]}><ChargesPage /></ProtectedRoute>} />
-        <Route path="clientes" element={<ProtectedRoute roles={["ADMIN", "FINANCEIRO", "DIRETOR_GERAL"]}><CustomersPage /></ProtectedRoute>} />
-        <Route path="atribuicao-clientes" element={<ProtectedRoute roles={["ADMIN", "FINANCEIRO", "COBRADOR_ATENDENTE", "DIRETOR_GERAL"]}><AssignmentPage /></ProtectedRoute>} />
-        <Route path="atendimento" element={<ProtectedRoute roles={["ADMIN", "COBRADOR_ATENDENTE", "ATENDENTE"]}><AttendantDashboard /></ProtectedRoute>} />
-        <Route path="recordatorios" element={<ProtectedRoute roles={["ADMIN", "COBRADOR_ATENDENTE", "ATENDENTE"]}><RemindersPage /></ProtectedRoute>} />
-        <Route path="relatorios" element={<ProtectedRoute roles={["ADMIN", "FINANCEIRO", "DIRETORA_COBRANCA", "DIRETOR_GERAL"]}><ReportsPage /></ProtectedRoute>} />
-        <Route path="configuracoes" element={<ProtectedRoute roles={["ADMIN"]}><SettingsPage /></ProtectedRoute>} />
-        <Route path="minha-conta" element={<ProtectedRoute roles={allProfiles}><MyAccountPage /></ProtectedRoute>} />
-        <Route path="financeiro/tarefas" element={<ProtectedRoute roles={["ADMIN", "FINANCEIRO", "DIRETOR_GERAL"]}><FinanceTasksPage /></ProtectedRoute>} />
+        <Route path="dashboard" element={<DashboardRouter />} />
+        <Route path="financeiro" element={<FinanceDashboard />} />
+        <Route path="cobranca" element={<ChargesPage />} />
+        <Route path="clientes" element={<CustomersPage />} />
+        <Route path="atribuicao-clientes" element={<AssignmentPage />} />
+        <Route path="atendimento" element={<AttendantDashboard />} />
+        <Route path="recordatorios" element={<RemindersPage />} />
+        <Route path="relatorios" element={<ReportsPage />} />
+        <Route path="configuracoes" element={<SettingsPage />} />
+        <Route path="minha-conta" element={<MyAccountPage />} />
+        <Route path="financeiro/tarefas" element={<FinanceTasksPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
