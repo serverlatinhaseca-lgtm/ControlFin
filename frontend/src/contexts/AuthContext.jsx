@@ -1,10 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { api, TOKEN_KEY, USER_KEY, getErrorMessage } from "../api.js";
+import { api, TOKEN_KEY, USER_KEY, SELECTOR_TOKEN_KEY, SELECTOR_MODE_KEY, getErrorMessage } from "../api.js";
 
 const AuthContext = createContext(null);
 
 function readStoredUser() {
-  const rawUser = window.localStorage.getItem(USER_KEY);
+  const rawUser = window.sessionStorage.getItem(USER_KEY);
 
   if (!rawUser) {
     return null;
@@ -13,26 +13,28 @@ function readStoredUser() {
   try {
     return JSON.parse(rawUser);
   } catch (error) {
-    window.localStorage.removeItem(USER_KEY);
+    window.sessionStorage.removeItem(USER_KEY);
     return null;
   }
 }
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => window.localStorage.getItem(TOKEN_KEY));
+  const [token, setToken] = useState(() => window.sessionStorage.getItem(TOKEN_KEY));
   const [user, setUser] = useState(readStoredUser);
   const [loading, setLoading] = useState(true);
 
   const clearSession = useCallback(() => {
-    window.localStorage.removeItem(TOKEN_KEY);
-    window.localStorage.removeItem(USER_KEY);
+    window.sessionStorage.removeItem(TOKEN_KEY);
+    window.sessionStorage.removeItem(USER_KEY);
+    window.sessionStorage.removeItem(SELECTOR_TOKEN_KEY);
+    window.sessionStorage.removeItem(SELECTOR_MODE_KEY);
     setToken(null);
     setUser(null);
   }, []);
 
   const persistSession = useCallback((nextToken, nextUser) => {
-    window.localStorage.setItem(TOKEN_KEY, nextToken);
-    window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+    window.sessionStorage.setItem(TOKEN_KEY, nextToken);
+    window.sessionStorage.setItem(USER_KEY, JSON.stringify(nextUser));
     setToken(nextToken);
     setUser(nextUser);
   }, []);
@@ -48,7 +50,7 @@ export function AuthProvider({ children }) {
   const refreshMe = useCallback(async () => {
     const response = await api.get("/auth/me");
     const nextUser = response.data.user || response.data;
-    window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+    window.sessionStorage.setItem(USER_KEY, JSON.stringify(nextUser));
     setUser(nextUser);
     return nextUser;
   }, []);
@@ -57,7 +59,7 @@ export function AuthProvider({ children }) {
     let active = true;
 
     async function boot() {
-      const storedToken = window.localStorage.getItem(TOKEN_KEY);
+      const storedToken = window.sessionStorage.getItem(TOKEN_KEY);
 
       if (!storedToken) {
         if (active) {
@@ -72,7 +74,7 @@ export function AuthProvider({ children }) {
         const nextUser = response.data.user || response.data;
 
         if (active) {
-          window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+          window.sessionStorage.setItem(USER_KEY, JSON.stringify(nextUser));
           setToken(storedToken);
           setUser(nextUser);
         }
@@ -118,7 +120,7 @@ export function AuthProvider({ children }) {
   const updateUser = useCallback(async (payload) => {
     const response = await api.put("/auth/me", payload);
     const nextUser = response.data.user || response.data;
-    window.localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+    window.sessionStorage.setItem(USER_KEY, JSON.stringify(nextUser));
     setUser(nextUser);
     return nextUser;
   }, []);
