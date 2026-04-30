@@ -8,6 +8,8 @@ import {
   FileText,
   LayoutDashboard,
   ListChecks,
+  PanelLeft,
+  Pin,
   Settings,
   UserCog,
   UsersRound
@@ -66,10 +68,15 @@ const menus = {
 };
 
 export default function Sidebar({ mode = "fixed" }) {
-  const { user } = useAuth();
+  const { user, updateSidebarMode } = useAuth();
   const { siteName, logoUrl } = useBranding();
   const items = menus[user?.profile] || menus.ATENDENTE;
   const sidebarMode = mode === "floating" ? "floating" : "fixed";
+
+  async function handleToggleSidebarMode() {
+    const nextMode = sidebarMode === "floating" ? "fixed" : "floating";
+    await updateSidebarMode(nextMode);
+  }
 
   return (
     <aside className={`sidebar-shell sidebar-${sidebarMode}`} aria-label="Menu principal">
@@ -92,6 +99,17 @@ export default function Sidebar({ mode = "fixed" }) {
           </NavLink>
         ))}
       </nav>
+      <div className="sidebar-footer">
+        <button
+          type="button"
+          className="sidebar-mode-toggle"
+          onClick={handleToggleSidebarMode}
+          title={sidebarMode === "floating" ? "Fixar barra" : "Modo flutuante"}
+        >
+          {sidebarMode === "floating" ? <Pin className="sidebar-icon" size={18} /> : <PanelLeft className="sidebar-icon" size={18} />}
+          <span className="sidebar-link-text">{sidebarMode === "floating" ? "Fixar barra" : "Modo flutuante"}</span>
+        </button>
+      </div>
     </aside>
   );
 }
