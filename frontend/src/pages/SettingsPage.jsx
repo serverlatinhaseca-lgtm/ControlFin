@@ -125,7 +125,7 @@ export default function SettingsPage() {
                 <input
                   className="input"
                   type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
                   onChange={(event) => setSelectedFile(event.target.files?.[0] || null)}
                 />
               </label>
@@ -152,7 +152,7 @@ export default function SettingsPage() {
               </div>
             </div>
             <div className="mt-5 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)] p-4 text-sm font-semibold text-[color:var(--muted)]">
-              Formatos aceitos: png, jpg, jpeg, webp e svg. Tamanho máximo: 2MB.
+              Formatos aceitos: png, jpg, jpeg e webp. Tamanho máximo: 2MB.
             </div>
           </aside>
         </section>

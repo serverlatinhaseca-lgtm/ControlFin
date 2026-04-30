@@ -37,6 +37,8 @@ services:
         condition: service_healthy
     expose:
       - "3001"
+    volumes:
+      - controlfin_uploads:/app/uploads
     networks:
       - controlfin_network
 
@@ -55,6 +57,7 @@ services:
 
 volumes:
   controlfin_postgres_data:
+  controlfin_uploads:
 
 networks:
   controlfin_network:
