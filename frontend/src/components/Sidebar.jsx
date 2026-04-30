@@ -67,11 +67,11 @@ const menus = {
   ]
 };
 
-export default function Sidebar({ mode = "fixed" }) {
+export default function Sidebar() {
   const { user, updateSidebarMode } = useAuth();
   const { siteName, logoUrl } = useBranding();
   const items = menus[user?.profile] || menus.ATENDENTE;
-  const sidebarMode = mode === "floating" ? "floating" : "fixed";
+  const sidebarMode = user?.sidebar_mode === "floating" ? "floating" : "fixed";
 
   async function handleToggleSidebarMode() {
     const nextMode = sidebarMode === "floating" ? "fixed" : "floating";
@@ -79,7 +79,7 @@ export default function Sidebar({ mode = "fixed" }) {
   }
 
   return (
-    <aside className={`sidebar-shell sidebar-${sidebarMode}`} aria-label="Menu principal">
+    <aside className={`sidebar sidebar-${sidebarMode}`} aria-label="Menu principal">
       <div className="sidebar-brand">
         {logoUrl ? (
           <img src={logoUrl} alt={siteName} className="sidebar-logo" />

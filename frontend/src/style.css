@@ -46,6 +46,7 @@
 html {
   width: 100%;
   min-height: 100%;
+  margin: 0;
   background: var(--bg);
 }
 
@@ -66,6 +67,7 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+  overflow-x: hidden;
 }
 
 button,
@@ -93,18 +95,6 @@ body,
 #root {
   width: 100%;
   min-height: 100%;
-  overflow-x: hidden;
-}
-
-.app-shell {
-  width: 100%;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-.app-layout {
-  position: relative;
-  width: 100%;
   overflow-x: hidden;
 }
 
@@ -317,20 +307,37 @@ body,
   }
 }
 
-.layout-content {
+.app-grid {
   min-height: 100vh;
-  min-width: 0;
-  width: auto;
+  width: 100%;
   max-width: 100%;
+  display: grid;
+  grid-template-columns: var(--sidebar-expanded-width) minmax(0, 1fr);
   overflow-x: hidden;
-  transition: margin-left 180ms ease;
 }
 
-.sidebar-shell {
-  position: fixed;
-  inset: 0 auto 0 0;
+.app-grid[data-sidebar-mode="floating"] {
+  grid-template-columns: var(--sidebar-collapsed-width) minmax(0, 1fr);
+}
+
+.app-main {
+  min-width: 0;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.page-content {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
   height: 100vh;
-  z-index: 50;
+  min-width: 0;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   width: var(--sidebar-expanded-width);
@@ -438,80 +445,59 @@ body,
   transform: translateX(2px);
 }
 
-@media (min-width: 1024px) {
-  .sidebar-fixed {
-    width: var(--sidebar-expanded-width);
+.sidebar-fixed {
+  width: var(--sidebar-expanded-width);
+}
+
+.sidebar-floating {
+  width: var(--sidebar-collapsed-width);
+}
+
+.sidebar-floating:hover,
+.sidebar-floating:focus-within {
+  width: var(--sidebar-expanded-width);
+  position: relative;
+  z-index: 30;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.sidebar-floating .sidebar-brand-text,
+.sidebar-floating .sidebar-link-text {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-0.25rem);
+  width: 0;
+}
+
+.sidebar-floating:hover .sidebar-brand-text,
+.sidebar-floating:hover .sidebar-link-text,
+.sidebar-floating:focus-within .sidebar-brand-text,
+.sidebar-floating:focus-within .sidebar-link-text {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+  width: auto;
+}
+
+.sidebar-nav {
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: calc(100vh - 7rem);
+  padding-right: 0.1rem;
+}
+
+@media (max-width: 768px) {
+  .app-grid,
+  .app-grid[data-sidebar-mode="floating"] {
+    grid-template-columns: var(--sidebar-collapsed-width) minmax(0, 1fr);
   }
 
-  .sidebar-floating {
+  .sidebar {
     width: var(--sidebar-collapsed-width);
   }
 
-  .sidebar-floating:hover,
-  .sidebar-floating:focus-within {
+  .sidebar:hover {
     width: var(--sidebar-expanded-width);
-    box-shadow: 0 24px 64px var(--shadow);
-  }
-
-  .sidebar-floating .sidebar-brand-text,
-  .sidebar-floating .sidebar-link-text {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateX(-0.25rem);
-    width: 0;
-  }
-
-  .sidebar-floating:hover .sidebar-brand-text,
-  .sidebar-floating:hover .sidebar-link-text,
-  .sidebar-floating:focus-within .sidebar-brand-text,
-  .sidebar-floating:focus-within .sidebar-link-text {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateX(0);
-    width: auto;
-  }
-
-  .sidebar-floating .sidebar-link {
-    justify-content: flex-start;
-  }
-
-  .sidebar-nav {
-    flex-direction: column;
-    overflow-x: hidden;
-    overflow-y: auto;
-    max-height: calc(100vh - 7rem);
-    padding-right: 0.1rem;
-  }
-
-  .main-fixed {
-    margin-left: var(--sidebar-expanded-width);
-  }
-
-  .main-floating {
-    margin-left: var(--sidebar-collapsed-width);
-  }
-}
-
-@media (max-width: 1023px) {
-  .sidebar-shell {
-    z-index: 45;
-  }
-
-  .sidebar-brand {
-    margin-bottom: 0.85rem;
-  }
-
-  .sidebar-nav {
-    flex-direction: row;
-    padding-bottom: 0.2rem;
-  }
-
-  .sidebar-link {
-    flex: 0 0 auto;
-  }
-
-  .main-fixed,
-  .main-floating {
-    margin-left: 0;
   }
 }
