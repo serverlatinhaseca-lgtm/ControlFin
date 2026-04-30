@@ -9,6 +9,7 @@ const { authRequired, allowRoles } = require("../middleware/auth");
 const router = express.Router();
 const uploadsDir = path.join(process.cwd(), "uploads");
 const maxLogoSizeBytes = 5 * 1024 * 1024;
+const maxLogoSizeBytes = 2 * 1024 * 1024;
 const allowedMimeTypes = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp"]);
 const allowedExtensions = new Set([".png", ".jpg", ".jpeg", ".webp"]);
 
