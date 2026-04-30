@@ -32,13 +32,15 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(readStoredUser);
   const [loading, setLoading] = useState(true);
 
-  const clearSession = useCallback(() => {
+  const clearSession = useCallback((clearRemember = true) => {
     window.sessionStorage.removeItem(TOKEN_KEY);
     window.sessionStorage.removeItem(USER_KEY);
     window.sessionStorage.removeItem(SELECTOR_TOKEN_KEY);
     window.sessionStorage.removeItem(SELECTOR_MODE_KEY);
-    window.localStorage.removeItem(REMEMBER_SELECTOR_TOKEN_KEY);
-    window.localStorage.removeItem(REMEMBER_SELECTOR_MODE_KEY);
+    if (clearRemember) {
+      window.localStorage.removeItem(REMEMBER_SELECTOR_TOKEN_KEY);
+      window.localStorage.removeItem(REMEMBER_SELECTOR_MODE_KEY);
+    }
     window.localStorage.removeItem(TOKEN_KEY);
     window.localStorage.removeItem(USER_KEY);
     setToken(null);
@@ -76,7 +78,7 @@ export function AuthProvider({ children }) {
 
       if (!storedToken) {
         if (active) {
-          clearSession();
+          clearSession(false);
           setLoading(false);
         }
         return;
@@ -93,7 +95,7 @@ export function AuthProvider({ children }) {
         }
       } catch (error) {
         if (active) {
-          clearSession();
+          clearSession(false);
         }
       } finally {
         if (active) {
@@ -132,7 +134,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(() => {
-    clearSession();
+    clearSession(true);
     window.location.assign("/login?logout=true");
   }, [clearSession]);
 

@@ -33,12 +33,15 @@ api.interceptors.response.use(
     const currentPath = window.location.pathname;
     const isLoginFlow = currentPath === "/login" || currentPath === "/selecionar-usuario";
 
-    if (status === 401 && !isLoginFlow) {
+    if (status === 401) {
       window.sessionStorage.removeItem(TOKEN_KEY);
       window.sessionStorage.removeItem(USER_KEY);
       window.sessionStorage.removeItem(SELECTOR_TOKEN_KEY);
       window.sessionStorage.removeItem(SELECTOR_MODE_KEY);
-      window.location.assign("/login");
+
+      if (!isLoginFlow) {
+        window.location.assign("/login?logout=true");
+      }
     }
 
     return Promise.reject(error);
