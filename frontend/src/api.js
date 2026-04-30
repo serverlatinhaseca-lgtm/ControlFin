@@ -11,7 +11,7 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = window.localStorage.getItem(TOKEN_KEY);
+  const token = window.sessionStorage.getItem(TOKEN_KEY);
 
   if (!config.headers) {
     config.headers = {};
@@ -32,8 +32,10 @@ api.interceptors.response.use(
     const isLoginFlow = currentPath === "/login" || currentPath === "/admin-login" || currentPath === "/selecionar-usuario";
 
     if (status === 401 && !isLoginFlow) {
-      window.localStorage.removeItem(TOKEN_KEY);
-      window.localStorage.removeItem(USER_KEY);
+      window.sessionStorage.removeItem(TOKEN_KEY);
+      window.sessionStorage.removeItem(USER_KEY);
+      window.sessionStorage.removeItem(SELECTOR_TOKEN_KEY);
+      window.sessionStorage.removeItem(SELECTOR_MODE_KEY);
       window.location.assign("/login");
     }
 
