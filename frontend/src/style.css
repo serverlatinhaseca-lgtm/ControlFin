@@ -5,19 +5,19 @@
 :root,
 [data-theme="light"] {
   color-scheme: light;
-  --bg: #ecfeff;
+  --bg: #faf7f2;
   --surface: #ffffff;
-  --surface-2: #f8fafc;
-  --text: #0f172a;
-  --muted: #64748b;
-  --primary: #0891b2;
-  --primary-hover: #0e7490;
-  --secondary: #06b6d4;
-  --border: #bae6fd;
-  --danger: #dc2626;
-  --success: #16a34a;
-  --warning: #d97706;
-  --shadow: rgba(15, 23, 42, 0.12);
+  --surface-2: #f3eadf;
+  --text: #2b2118;
+  --muted: #7a6a5d;
+  --primary: #8b5e34;
+  --primary-hover: #70451f;
+  --secondary: #c49a6c;
+  --border: #e5d6c6;
+  --danger: #b91c1c;
+  --success: #15803d;
+  --warning: #b45309;
+  --shadow: rgba(43, 33, 24, 0.12);
 }
 
 [data-theme="dark"] {
@@ -50,7 +50,8 @@ body {
   min-height: 100%;
   margin: 0;
   background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 18%, transparent), transparent 28rem),
+    radial-gradient(circle at top left, color-mix(in srgb, var(--secondary) 18%, transparent), transparent 30rem),
+    radial-gradient(circle at bottom right, color-mix(in srgb, var(--primary) 10%, transparent), transparent 28rem),
     var(--bg);
   color: var(--text);
   font-family:
@@ -77,6 +78,10 @@ button {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.68;
+}
+
+img {
+  max-width: 100%;
 }
 
 .app-bg {
@@ -107,13 +112,15 @@ button:disabled {
   transition:
     transform 160ms ease,
     background 160ms ease,
-    border-color 160ms ease;
+    border-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
   background: var(--primary-hover);
   border-color: var(--primary-hover);
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--primary) 22%, transparent);
 }
 
 .btn-secondary {
@@ -129,12 +136,14 @@ button:disabled {
   font-weight: 800;
   transition:
     transform 160ms ease,
-    border-color 160ms ease;
+    border-color 160ms ease,
+    background 160ms ease;
 }
 
 .btn-secondary:hover {
   transform: translateY(-1px);
   border-color: var(--primary);
+  background: color-mix(in srgb, var(--surface-2) 80%, var(--surface));
 }
 
 .input {
@@ -147,7 +156,23 @@ button:disabled {
   outline: none;
   transition:
     border-color 160ms ease,
-    box-shadow 160ms ease;
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.input[type="file"] {
+  padding: 0.65rem 0.75rem;
+}
+
+.input::file-selector-button {
+  margin-right: 0.9rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 800;
+  padding: 0.5rem 0.75rem;
 }
 
 .input:focus {

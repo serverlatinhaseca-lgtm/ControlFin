@@ -1,26 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ShieldCheck, UserRound } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api, SELECTOR_MODE_KEY, SELECTOR_TOKEN_KEY, getErrorMessage } from "../api.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import { useBranding } from "../contexts/BrandingContext.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
-import ErrorMessage from "../components/ErrorMessage.jsx";
 import Loading from "../components/Loading.jsx";
 import PinModal from "../components/PinModal.jsx";
-import { asArray } from "../utils/formatters.js";
-
-function getModeFromSearch(search) {
-  const params = new URLSearchParams(search);
-  const mode = params.get("mode");
-  return mode === "admin" ? "admin" : "common";
-}
 
 function profileLabel(profile) {
   const labels = {
     ADMIN: "Administrador",
     FINANCEIRO: "Financeiro",
     COBRADOR_ATENDENTE: "Cobrador Atendente",
-    DIRETORA_COBRANCA: "Diretoria Cobranca",
+    DIRETORA_COBRANCA: "Diretoria Cobrança",
     DIRETOR_GERAL: "Diretor Geral",
     ATENDENTE: "Atendente"
   };
@@ -28,145 +21,198 @@ function profileLabel(profile) {
   return labels[profile] || profile;
 }
 
+function destinationForProfile(profile) {
+  const destinations = {
+    ADMIN: "/dashboard",
+    DIRETOR_GERAL: "/dashboard",
+    FINANCEIRO: "/financeiro",
+    COBRADOR_ATENDENTE: "/dashboard",
+    DIRETORA_COBRANCA: "/cobranca",
+    ATENDENTE: "/atendimento"
+  };
+
+  return destinations[profile] || "/dashboard";
+}
+
 export default function UserSelector() {
-  const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { completeLogin } = useAuth();
-  const requestedMode = getModeFromSearch(location.search);
+  const { siteName, logoUrl } = useBranding();
+  const mode = useMemo(() => {
+    const requestedMode = searchParams.get("mode") || window.sessionStorage.getItem(SELECTOR_MODE_KEY) || "common";
+    return requestedMode === "admin" ? "admin" : "common";
+  }, [searchParams]);
   const [users, setUsers] = useState([]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [pinError, setPinError] = useState("");
-  const [error, setError] = useState("");
-  const [submittingPin, setSubmittingPin] = useState(false);
+  const [pinLoading, setPinLoading] = useState(false);
 
-  const selectorToken = useMemo(() => window.sessionStorage.getItem(SELECTOR_TOKEN_KEY) || "", []);
-  const storedMode = useMemo(() => window.sessionStorage.getItem(SELECTOR_MODE_KEY) || requestedMode, [requestedMode]);
-  const mode = storedMode === "admin" ? "admin" : requestedMode;
+  useEffect(() => {
+    let active = true;
 
-  async function loadUsers() {
-    const currentToken = window.sessionStorage.getItem(SELECTOR_TOKEN_KEY) || "";
+    async function loadUsers() {
+      const selectorToken = window.sessionStorage.getItem(SELECTOR_TOKEN_KEY);
 
-    if (!currentToken) {
-      navigate(mode === "admin" ? "/admin-login" : "/login", { replace: true });
+      if (!selectorToken) {
+        navigate(mode === "admin" ? "/admin-login" : "/login", { replace: true });
+        return;
+      }
+
+      setLoading(true);
+      setError("");
+
+      try {
+        const response = await api.get(`/auth/selector-users?mode=${mode}`, {
+          headers: {
+            Authorization: `Bearer ${selectorToken}`
+          }
+        });
+
+        if (active) {
+          setUsers(response.data.users || []);
+        }
+      } catch (requestError) {
+        if (active) {
+          setError(getErrorMessage(requestError, "Não foi possível carregar usuários."));
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadUsers();
+
+    return () => {
+      active = false;
+    };
+  }, [mode, navigate]);
+
+  async function handlePinConfirm(pin) {
+    const selectorToken = window.sessionStorage.getItem(SELECTOR_TOKEN_KEY);
+
+    if (!selectorToken || !selectedUser) {
+      setPinError("Sessão de seleção expirada.");
       return;
     }
 
-    setLoadingUsers(true);
-    setError("");
-
-    try {
-      const response = await api.get("/auth/selector-users", {
-        params: {
-          mode
-        },
-        headers: {
-          Authorization: `Bearer ${currentToken}`
-        }
-      });
-
-      const list = asArray(response.data.users || response.data);
-      setUsers(list);
-    } catch (loadError) {
-      setError(getErrorMessage(loadError, "Nao foi possivel carregar usuarios."));
-    } finally {
-      setLoadingUsers(false);
-    }
-  }
-
-  useEffect(() => {
-    loadUsers();
-  }, [mode]);
-
-  function openPinModal(user) {
-    setSelectedUser(user);
-    setPinError("");
-  }
-
-  function closePinModal() {
-    setSelectedUser(null);
-    setPinError("");
-  }
-
-  async function confirmPin(pin) {
-    setSubmittingPin(true);
+    setPinLoading(true);
     setPinError("");
 
     try {
-      const currentToken = window.sessionStorage.getItem(SELECTOR_TOKEN_KEY) || selectorToken;
       const response = await api.post("/auth/pin-login", {
-        selector_token: currentToken,
+        selector_token: selectorToken,
         user_id: selectedUser.id,
         pin
       });
 
       window.sessionStorage.removeItem(SELECTOR_TOKEN_KEY);
       window.sessionStorage.removeItem(SELECTOR_MODE_KEY);
-      completeLogin(response.data.token, response.data.user);
-      navigate("/", { replace: true });
-    } catch (pinLoginError) {
-      setPinError(getErrorMessage(pinLoginError, "PIN invalido"));
+      const user = completeLogin(response.data.token, response.data.user);
+      navigate(destinationForProfile(user.profile), { replace: true });
+    } catch (requestError) {
+      setPinError(getErrorMessage(requestError, "PIN inválido"));
     } finally {
-      setSubmittingPin(false);
+      setPinLoading(false);
     }
   }
 
   return (
     <div className="app-bg min-h-screen px-4 py-8">
-      <div className="mx-auto w-full max-w-6xl">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Link className="btn-secondary inline-flex items-center justify-center gap-2" to={mode === "admin" ? "/admin-login" : "/login"}>
-            <ArrowLeft size={18} />
-            Voltar
-          </Link>
-          <ThemeToggle />
-        </div>
-
-        <div className="card p-6 lg:p-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col">
+        <header className="flex flex-col gap-4 rounded-[2rem] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-lg md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            {logoUrl ? (
+              <img src={logoUrl} alt={siteName} className="h-12 w-12 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)] object-contain p-1" />
+            ) : (
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--primary)] text-base font-black text-white">CF</div>
+            )}
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-[color:var(--primary)]">{mode === "admin" ? "Seletor administrativo" : "Seletor de usuarios"}</p>
-              <h1 className="mt-3 text-3xl font-black tracking-tight text-[color:var(--text)]">Selecione usuário e clique para inserir PIN</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">O PIN é individual, não é salvo automaticamente e deve ser informado no modal de confirmação.</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--primary)]">{siteName}</p>
+              <h1 className="mt-1 text-xl font-black text-[color:var(--text)]">Seleção de usuário</h1>
             </div>
-            <div className="inline-flex items-center gap-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)] px-4 py-3 text-sm font-black text-[color:var(--text)]">
-              <ShieldCheck size={18} className="text-[color:var(--primary)]" />
-              {mode === "admin" ? "Modo administrativo" : "Modo comum"}
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <ThemeToggle compact />
+            <Link to={mode === "admin" ? "/admin-login" : "/login"} className="btn-secondary">
+              <ArrowLeft size={18} />
+              <span>Voltar</span>
+            </Link>
+          </div>
+        </header>
+
+        <main className="flex flex-1 flex-col py-8">
+          <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[color:var(--primary)]">{mode === "admin" ? "Acesso administrativo" : "Acesso operacional"}</p>
+              <h2 className="mt-2 text-3xl font-black text-[color:var(--text)]">Selecione usuário e clique para inserir PIN</h2>
+              <p className="mt-2 max-w-2xl text-sm font-semibold text-[color:var(--muted)]">O PIN é individual, não é preenchido automaticamente e não fica salvo no navegador.</p>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-sm font-black text-[color:var(--text)]">
+              {mode === "admin" ? <ShieldCheck size={18} /> : <UserRound size={18} />}
+              <span>{mode === "admin" ? "Somente ADMIN" : "Usuários do sistema"}</span>
             </div>
           </div>
 
-          <div className="mt-6">
-            <ErrorMessage message={error} onRetry={loadUsers} />
-          </div>
+          {loading ? <Loading message="Carregando usuários" /> : null}
 
-          {loadingUsers ? (
-            <Loading message="Carregando usuarios" />
-          ) : users.length === 0 ? (
-            <div className="mt-8 rounded-2xl border border-dashed border-[color:var(--border)] p-8 text-center text-sm text-[color:var(--muted)]">Nenhum usuário disponível para este modo de acesso.</div>
-          ) : (
-            <div className="mt-8 max-h-[65vh] overflow-y-auto pr-1">
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {users.map((user) => (
-                  <button key={user.id} type="button" className="rounded-3xl border border-[color:var(--border)] bg-[color:var(--surface)] p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[color:var(--primary)] hover:shadow-xl" onClick={() => openPinModal(user)}>
-                    <div className="flex items-start gap-4">
-                      <div className="rounded-2xl bg-[color:var(--surface-2)] p-3 text-[color:var(--primary)]">
-                        <UserRound size={22} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-lg font-black text-[color:var(--text)]">{user.name}</p>
-                        <p className="mt-1 text-xs font-black uppercase tracking-[0.12em] text-[color:var(--muted)]">{profileLabel(user.profile)}</p>
-                        <p className="mt-3 text-xs text-[color:var(--muted)]">Clique para inserir PIN</p>
-                      </div>
+          {error ? (
+            <div className="card p-5">
+              <p className="text-sm font-bold text-[color:var(--danger)]">{error}</p>
+              <Link to={mode === "admin" ? "/admin-login" : "/login"} className="btn-primary mt-4 inline-flex">
+                Refazer login geral
+              </Link>
+            </div>
+          ) : null}
+
+          {!loading && !error ? (
+            <div className="grid max-h-[58vh] gap-4 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-3">
+              {users.map((user) => (
+                <button
+                  key={user.id}
+                  type="button"
+                  className="card group p-5 text-left transition hover:-translate-y-0.5 hover:border-[color:var(--primary)] hover:shadow-xl"
+                  onClick={() => {
+                    setSelectedUser(user);
+                    setPinError("");
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--surface-2)] text-lg font-black text-[color:var(--primary)] group-hover:bg-[color:var(--primary)] group-hover:text-white">
+                      {user.name
+                        .split(" ")
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((part) => part[0])
+                        .join("")}
                     </div>
-                  </button>
-                ))}
-              </div>
+                    <span className="badge">{profileLabel(user.profile)}</span>
+                  </div>
+                  <h3 className="mt-4 text-lg font-black text-[color:var(--text)]">{user.name}</h3>
+                  <p className="mt-1 text-sm font-semibold text-[color:var(--muted)]">{user.email}</p>
+                  <p className="mt-4 text-xs font-black uppercase tracking-[0.18em] text-[color:var(--primary)]">Clique para inserir PIN</p>
+                </button>
+              ))}
             </div>
-          )}
-        </div>
+          ) : null}
+        </main>
       </div>
 
-      <PinModal open={Boolean(selectedUser)} user={selectedUser} loading={submittingPin} error={pinError} onClose={closePinModal} onConfirm={confirmPin} />
+      <PinModal
+        open={Boolean(selectedUser)}
+        user={selectedUser}
+        loading={pinLoading}
+        error={pinError}
+        onClose={() => {
+          setSelectedUser(null);
+          setPinError("");
+        }}
+        onConfirm={handlePinConfirm}
+      />
     </div>
   );
 }

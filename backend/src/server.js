@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const fs = require("fs");
+const path = require("path");
 
 dotenv.config();
 
@@ -17,10 +19,14 @@ const invoicesRoutes = require("./routes/invoices");
 const tasksRoutes = require("./routes/tasks");
 const remindersRoutes = require("./routes/reminders");
 const contazulRoutes = require("./routes/contazulAuth");
+const settingsRoutes = require("./routes/settings");
 
 const app = express();
 const port = Number(process.env.PORT) || 3001;
 const frontendUrl = process.env.FRONTEND_URL || "http://localhost";
+const uploadsDir = path.join(process.cwd(), "uploads");
+
+fs.mkdirSync(uploadsDir, { recursive: true });
 
 app.use(
   cors({
@@ -30,6 +36,7 @@ app.use(
 );
 
 app.use(express.json({ limit: "2mb" }));
+app.use("/api/uploads", express.static(uploadsDir));
 
 app.get("/api/health", async (request, response) => {
   try {
@@ -61,6 +68,7 @@ app.use("/api/invoices", invoicesRoutes);
 app.use("/api/tasks", tasksRoutes);
 app.use("/api/reminders", remindersRoutes);
 app.use("/api/contazul", contazulRoutes);
+app.use("/api/settings", settingsRoutes);
 
 app.use("/api", (request, response) => {
   return response.status(404).json({

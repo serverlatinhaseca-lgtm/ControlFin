@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Eye, EyeOff, Lock, X } from "lucide-react";
+import { useBranding } from "../contexts/BrandingContext.jsx";
 
 export default function PinModal({ open, user, loading, error, onClose, onConfirm }) {
   const inputRef = useRef(null);
+  const { siteName, logoUrl } = useBranding();
   const [pin, setPin] = useState("");
   const [showPin, setShowPin] = useState(false);
 
@@ -43,27 +45,38 @@ export default function PinModal({ open, user, loading, error, onClose, onConfir
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 px-4 py-6" role="dialog" aria-modal="true">
       <div className="w-full max-w-md rounded-[2rem] border border-[color:var(--border)] bg-[color:var(--surface)] p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[color:var(--primary)]">ControlFin</p>
-            <h2 className="mt-2 text-2xl font-black text-[color:var(--text)]">Insira seu PIN</h2>
-            <p className="mt-2 text-sm text-[color:var(--muted)]">{user.name}</p>
+          <div className="flex items-center gap-3">
+            {logoUrl ? (
+              <img src={logoUrl} alt={siteName} className="h-12 w-12 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)] object-contain p-1" />
+            ) : (
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--primary)] text-sm font-black text-white">CF</div>
+            )}
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[color:var(--primary)]">{siteName}</p>
+              <h2 className="mt-1 text-2xl font-black text-[color:var(--text)]">Insira seu PIN</h2>
+            </div>
           </div>
           <button type="button" className="rounded-2xl border border-[color:var(--border)] p-2 text-[color:var(--muted)] hover:text-[color:var(--text)]" onClick={handleClose} aria-label="Fechar modal">
             <X size={18} />
           </button>
         </div>
 
-        <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
+        <div className="mt-5 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)] p-4">
+          <p className="text-sm font-black text-[color:var(--text)]">{user.name}</p>
+          <p className="mt-1 text-xs font-semibold text-[color:var(--muted)]">{user.email}</p>
+        </div>
+
+        <form className="mt-6 space-y-5" onSubmit={handleSubmit} autoComplete="off">
           <label className="block">
             <span className="mb-2 block text-sm font-bold text-[color:var(--muted)]">PIN</span>
             <div className="relative">
-              <Lock className="pointer-events-none absolute left-3 top-3 text-[color:var(--muted)]" size={18} />
+              <Lock className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[color:var(--muted)]" size={18} />
               <input
                 ref={inputRef}
-                className="input pl-10 pr-12 text-center text-lg font-black tracking-[0.35em]"
+                className="input pl-12 pr-16 text-center text-lg font-black tracking-[0.35em]"
                 type={showPin ? "text" : "password"}
                 value={pin}
                 onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 8))}
@@ -74,7 +87,7 @@ export default function PinModal({ open, user, loading, error, onClose, onConfir
               />
               <button
                 type="button"
-                className="absolute right-3 top-2.5 rounded-xl p-1.5 text-[color:var(--muted)] hover:bg-[color:var(--surface-2)] hover:text-[color:var(--text)]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-xl p-2 text-[color:var(--muted)] hover:bg-[color:var(--surface-2)] hover:text-[color:var(--text)]"
                 onClick={() => setShowPin((currentValue) => !currentValue)}
                 aria-label={showPin ? "Ocultar PIN" : "Mostrar PIN"}
               >

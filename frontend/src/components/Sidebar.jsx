@@ -13,6 +13,7 @@ import {
   UsersRound
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import { useBranding } from "../contexts/BrandingContext.jsx";
 
 const menus = {
   ADMIN: [
@@ -66,14 +67,19 @@ const menus = {
 
 export default function Sidebar() {
   const { user } = useAuth();
+  const { siteName, logoUrl } = useBranding();
   const items = menus[user?.profile] || menus.ATENDENTE;
 
   return (
     <aside className="border-b border-[color:var(--border)] bg-[color:var(--surface)] p-4 lg:fixed lg:inset-y-0 lg:left-0 lg:w-72 lg:border-b-0 lg:border-r">
       <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--primary)] font-black text-white">CF</div>
+        {logoUrl ? (
+          <img src={logoUrl} alt={siteName} className="h-11 w-11 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)] object-contain p-1" />
+        ) : (
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--primary)] font-black text-white">CF</div>
+        )}
         <div>
-          <p className="text-lg font-black text-[color:var(--text)]">ControlFin</p>
+          <p className="text-lg font-black text-[color:var(--text)]">{siteName}</p>
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--muted)]">Gestao financeira</p>
         </div>
       </div>
