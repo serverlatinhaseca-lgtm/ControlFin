@@ -10,9 +10,9 @@ const SELECTOR_TOKEN_TTL = "10m";
 const NORMAL_TOKEN_TTL = "8h";
 const SELECTOR_TOKEN_TYPE = "selector";
 const DEFAULT_GENERAL_LOGIN_USER = "controlfin";
-const DEFAULT_GENERAL_LOGIN_PASSWORD_HASH = "$2b$10$g/hJRCT59Qo5SMKL8i3ApuAN8D5STnvtJ4z3/Z1/YgOWBZAhkllmG";
+const DEFAULT_GENERAL_LOGIN_PASSWORD_HASH = "$2a$10$EKEOhgGYTpz/NcMhxtMSV.097z83Dt1vOIQ31OMcPFZmg9POsZG32";
 const DEFAULT_ADMIN_LOGIN_USER = "admin";
-const DEFAULT_ADMIN_LOGIN_PASSWORD_HASH = "$2b$10$QCkFsLumKe/Z7Mgi8YBza.AzcbDA9HGhBqp2i/P1AO7ICPqyc//t.";
+const DEFAULT_ADMIN_LOGIN_PASSWORD_HASH = "$2a$10$xakrn/.5AguYcNNKLFN9ceLrT3WCps9pz6mO17/Utu3N4HKJVMcS6";
 
 const commonSelectorProfiles = [
   "FINANCEIRO",
@@ -429,6 +429,65 @@ router.get("/me", authRequired, async (request, response) => {
   return response.json({
     user: request.user
   });
+});
+
+router.post("/change-pin", authRequired, async (request, response, next) => {
+  try {
+    const currentPin = String(request.body.current_pin || "");
+    const newPin = String(request.body.new_pin || "");
+
+    if (!currentPin || !newPin) {
+      return response.status(400).json({
+        message: "Informe o PIN atual e o novo PIN."
+      });
+    }
+
+    if (!/^\d{4,8}$/.test(newPin)) {
+      return response.status(400).json({
+        message: "O novo PIN deve conter de 4 a 8 digitos numericos."
+      });
+    }
+
+    const userResult = await query(
+      `SELECT id, pin_hash
+       FROM users
+       WHERE id = $1`,
+      [request.user.id]
+    );
+
+    if (userResult.rowCount === 0) {
+      return response.status(404).json({
+        message: "Usuario nao encontrado."
+      });
+    }
+
+    const user = userResult.rows[0];
+    const pinMatches = user.pin_hash ? await bcrypt.compare(currentPin, user.pin_hash) : false;
+
+    if (!pinMatches) {
+      return response.status(401).json({
+        message: "PIN invalido"
+      });
+    }
+
+    const pinHash = await bcrypt.hash(newPin, 10);
+
+    await query(
+      `UPDATE users
+       SET pin_hash = $2,
+           pin_set = true,
+           updated_at = now()
+       WHERE id = $1`,
+      [request.user.id, pinHash]
+    );
+
+    return response.json({
+      success: true,
+      message: "PIN alterado com sucesso."
+    });
+  } catch (error) {
+    return next(error);
+  }
 });
 
 router.post("/change-password", authRequired, async (request, response, next) => {
