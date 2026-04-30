@@ -50,7 +50,7 @@ async function authRequired(request, response, next) {
     }
 
     const result = await query(
-      `SELECT id, name, email, profile, company_id, theme_mode
+      `SELECT id, name, email, profile, company_id, theme_mode, COALESCE(sidebar_mode, 'fixed') AS sidebar_mode
        FROM users
        WHERE id = $1`,
       [userId]

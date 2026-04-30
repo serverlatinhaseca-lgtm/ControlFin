@@ -33,7 +33,8 @@ function sanitizeUser(user) {
     email: user.email,
     profile: user.profile,
     company_id: user.company_id,
-    theme_mode: user.theme_mode
+    theme_mode: user.theme_mode,
+    sidebar_mode: user.sidebar_mode || "fixed"
   };
 }
 
@@ -45,12 +46,17 @@ function sanitizeSelectorUser(user) {
     profile: user.profile,
     company_id: user.company_id,
     theme_mode: user.theme_mode,
+    sidebar_mode: user.sidebar_mode || "fixed",
     pin_set: Boolean(user.pin_set)
   };
 }
 
 function isValidThemeMode(themeMode) {
   return themeMode === "light" || themeMode === "dark";
+}
+
+function isValidSidebarMode(sidebarMode) {
+  return sidebarMode === "fixed" || sidebarMode === "floating";
 }
 
 function normalizeMode(mode) {
@@ -253,7 +259,7 @@ async function listSelectorUsers(mode) {
   const profiles = profilesForMode(mode);
 
   const result = await query(
-    `SELECT id, name, email, profile, company_id, theme_mode, pin_set
+    `SELECT id, name, email, profile, company_id, theme_mode, COALESCE(sidebar_mode, 'fixed') AS sidebar_mode, pin_set
      FROM users
      WHERE profile = ANY($1::text[])
      ORDER BY
@@ -407,7 +413,7 @@ router.post("/pin-login", async (request, response, next) => {
     }
 
     const result = await query(
-      `SELECT id, name, email, profile, company_id, theme_mode, pin_hash, pin_set
+      `SELECT id, name, email, profile, company_id, theme_mode, COALESCE(sidebar_mode, 'fixed') AS sidebar_mode, pin_hash, pin_set
        FROM users
        WHERE id = $1`,
       [userId]
@@ -476,7 +482,7 @@ router.post("/login", async (request, response, next) => {
     }
 
     const result = await query(
-      `SELECT id, name, email, password_hash, profile, company_id, theme_mode
+      `SELECT id, name, email, password_hash, profile, company_id, theme_mode, COALESCE(sidebar_mode, 'fixed') AS sidebar_mode
        FROM users
        WHERE id = $1`,
       [userId]
@@ -634,6 +640,7 @@ router.put("/me", authRequired, async (request, response, next) => {
   try {
     const name = request.body.name !== undefined ? String(request.body.name).trim() : request.user.name;
     const themeMode = request.body.theme_mode !== undefined ? String(request.body.theme_mode) : request.user.theme_mode;
+    const sidebarMode = request.body.sidebar_mode !== undefined ? String(request.body.sidebar_mode) : request.user.sidebar_mode || "fixed";
 
     if (!name) {
       return response.status(400).json({
@@ -647,14 +654,21 @@ router.put("/me", authRequired, async (request, response, next) => {
       });
     }
 
+    if (!isValidSidebarMode(sidebarMode)) {
+      return response.status(400).json({
+        message: "Modo da barra lateral invalido. Use fixed ou floating."
+      });
+    }
+
     const result = await query(
       `UPDATE users
        SET name = $2,
            theme_mode = $3,
+           sidebar_mode = $4,
            updated_at = now()
        WHERE id = $1
-       RETURNING id, name, email, profile, company_id, theme_mode`,
-      [request.user.id, name, themeMode]
+       RETURNING id, name, email, profile, company_id, theme_mode, COALESCE(sidebar_mode, 'fixed') AS sidebar_mode`,
+      [request.user.id, name, themeMode, sidebarMode]
     );
 
     return response.json({

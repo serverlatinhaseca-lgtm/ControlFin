@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { KeyRound, Save, UserRound } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { KeyRound, PanelLeft, Save, UserRound } from "lucide-react";
 import { api, getErrorMessage } from "../api.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useTheme } from "../contexts/ThemeContext.jsx";
@@ -7,9 +7,10 @@ import ThemeToggle from "../components/ThemeToggle.jsx";
 import ErrorMessage from "../components/ErrorMessage.jsx";
 
 export default function MyAccountPage() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, updateSidebarMode } = useAuth();
   const { theme } = useTheme();
   const [name, setName] = useState(user?.name || "");
+  const [sidebarMode, setSidebarMode] = useState(user?.sidebar_mode === "floating" ? "floating" : "fixed");
   const [passwords, setPasswords] = useState({
     current_password: "",
     new_password: "",
@@ -19,6 +20,11 @@ export default function MyAccountPage() {
   const [error, setError] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [savingSidebar, setSavingSidebar] = useState(false);
+
+  useEffect(() => {
+    setSidebarMode(user?.sidebar_mode === "floating" ? "floating" : "fixed");
+  }, [user?.sidebar_mode]);
 
   async function saveName(event) {
     event.preventDefault();
@@ -27,7 +33,7 @@ export default function MyAccountPage() {
     setMessage("");
 
     try {
-      await updateUser({ name, theme_mode: theme });
+      await updateUser({ name, theme_mode: theme, sidebar_mode: user?.sidebar_mode || sidebarMode });
       setMessage("Dados atualizados com sucesso.");
     } catch (saveError) {
       setError(getErrorMessage(saveError, "Nao foi possivel atualizar usuario."));
@@ -62,6 +68,22 @@ export default function MyAccountPage() {
     }
   }
 
+  async function saveSidebarPreference(event) {
+    event.preventDefault();
+    setSavingSidebar(true);
+    setError("");
+    setMessage("");
+
+    try {
+      await updateSidebarMode(sidebarMode);
+      setMessage("Preferencia da barra lateral salva com sucesso.");
+    } catch (sidebarError) {
+      setError(getErrorMessage(sidebarError, "Nao foi possivel salvar a preferencia da barra lateral."));
+    } finally {
+      setSavingSidebar(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -72,7 +94,7 @@ export default function MyAccountPage() {
       <ErrorMessage message={error} />
       {message ? <div className="rounded-xl border border-[color:var(--success)] p-3 text-sm font-bold text-[color:var(--success)]">{message}</div> : null}
 
-      <div className="grid gap-6 xl:grid-cols-3">
+      <div className="grid gap-6 xl:grid-cols-4">
         <form className="card space-y-4 p-5" onSubmit={saveName}>
           <div className="flex items-center gap-3">
             <UserRound className="text-[color:var(--primary)]" size={22} />
@@ -128,6 +150,29 @@ export default function MyAccountPage() {
             <p className="mt-1 font-black text-[color:var(--text)]">{theme}</p>
           </div>
         </section>
+
+        <form className="card space-y-4 p-5" onSubmit={saveSidebarPreference}>
+          <div className="flex items-center gap-3">
+            <PanelLeft className="text-[color:var(--primary)]" size={22} />
+            <h2 className="text-xl font-black text-[color:var(--text)]">Preferencias</h2>
+          </div>
+          <p className="text-sm font-semibold text-[color:var(--muted)]">Escolha como a barra lateral deve se comportar para o seu usuario.</p>
+          <label>
+            <span className="mb-2 block text-sm font-bold text-[color:var(--muted)]">Comportamento da barra lateral</span>
+            <select className="input" value={sidebarMode} onChange={(event) => setSidebarMode(event.target.value)}>
+              <option value="fixed">Fixa expandida</option>
+              <option value="floating">Flutuante</option>
+            </select>
+          </label>
+          <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-2)] p-3">
+            <p className="text-sm font-bold text-[color:var(--muted)]">Modo atual</p>
+            <p className="mt-1 font-black text-[color:var(--text)]">{user?.sidebar_mode === "floating" ? "Flutuante" : "Fixa expandida"}</p>
+          </div>
+          <button type="submit" className="btn-primary" disabled={savingSidebar}>
+            <Save size={18} />
+            <span>{savingSidebar ? "Salvando" : "Salvar preferencia"}</span>
+          </button>
+        </form>
       </div>
     </div>
   );

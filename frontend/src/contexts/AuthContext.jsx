@@ -146,6 +146,19 @@ export function AuthProvider({ children }) {
     return nextUser;
   }, []);
 
+  const updateSidebarMode = useCallback(
+    async (sidebarMode) => {
+      const response = await api.put("/users/me/sidebar", {
+        sidebar_mode: sidebarMode
+      });
+      const nextUser = response.data.user || Object.assign({}, user, { sidebar_mode: response.data.sidebar_mode });
+      window.sessionStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+      setUser(nextUser);
+      return nextUser;
+    },
+    [user]
+  );
+
   const value = useMemo(
     () => ({
       user,
@@ -156,10 +169,11 @@ export function AuthProvider({ children }) {
       logout,
       refreshMe,
       updateUser,
+      updateSidebarMode,
       forgetRememberLogin,
       isAuthenticated: Boolean(token && user)
     }),
-    [completeLogin, forgetRememberLogin, loading, login, logout, refreshMe, token, updateUser, user]
+    [completeLogin, forgetRememberLogin, loading, login, logout, refreshMe, token, updateSidebarMode, updateUser, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

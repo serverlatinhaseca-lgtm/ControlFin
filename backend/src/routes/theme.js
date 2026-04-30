@@ -29,7 +29,7 @@ router.put("/", authRequired, async (request, response, next) => {
        SET theme_mode = $2,
            updated_at = now()
        WHERE id = $1
-       RETURNING id, name, email, profile, company_id, theme_mode`,
+       RETURNING id, name, email, profile, company_id, theme_mode, COALESCE(sidebar_mode, 'fixed') AS sidebar_mode`,
       [request.user.id, themeMode]
     );
 

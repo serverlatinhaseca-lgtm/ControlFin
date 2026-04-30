@@ -65,29 +65,30 @@ const menus = {
   ]
 };
 
-export default function Sidebar() {
+export default function Sidebar({ mode = "fixed" }) {
   const { user } = useAuth();
   const { siteName, logoUrl } = useBranding();
   const items = menus[user?.profile] || menus.ATENDENTE;
+  const sidebarMode = mode === "floating" ? "floating" : "fixed";
 
   return (
-    <aside className="border-b border-[color:var(--border)] bg-[color:var(--surface)] p-4 lg:fixed lg:inset-y-0 lg:left-0 lg:w-72 lg:border-b-0 lg:border-r">
-      <div className="mb-6 flex items-center gap-3">
+    <aside className={`sidebar-shell sidebar-${sidebarMode}`} aria-label="Menu principal">
+      <div className="sidebar-brand">
         {logoUrl ? (
-          <img src={logoUrl} alt={siteName} className="h-11 w-11 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)] object-contain p-1" />
+          <img src={logoUrl} alt={siteName} className="sidebar-logo" />
         ) : (
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--primary)] font-black text-white">CF</div>
+          <div className="sidebar-logo-fallback">CF</div>
         )}
-        <div>
-          <p className="text-lg font-black text-[color:var(--text)]">{siteName}</p>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--muted)]">Gestao financeira</p>
+        <div className="sidebar-brand-text">
+          <p className="sidebar-site-name">{siteName}</p>
+          <p className="sidebar-site-subtitle">Gestao financeira</p>
         </div>
       </div>
-      <nav className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
+      <nav className="sidebar-nav">
         {items.map(([label, path, Icon]) => (
-          <NavLink key={path} to={path} className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
-            <Icon size={19} />
-            <span className="whitespace-nowrap">{label}</span>
+          <NavLink key={path} to={path} title={sidebarMode === "floating" ? label : undefined} className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
+            <Icon className="sidebar-icon" size={19} />
+            <span className="sidebar-link-text">{label}</span>
           </NavLink>
         ))}
       </nav>
