@@ -15,10 +15,16 @@ export default function MyAccountPage() {
     new_password: "",
     confirm_password: ""
   });
+  const [pins, setPins] = useState({
+    current_pin: "",
+    new_pin: "",
+    confirm_new_pin: ""
+  });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [savingPin, setSavingPin] = useState(false);
 
 
   async function saveName(event) {
@@ -60,6 +66,60 @@ export default function MyAccountPage() {
       setError(getErrorMessage(passwordError, "Nao foi possivel alterar senha."));
     } finally {
       setSavingPassword(false);
+    }
+  }
+
+  async function changePin(event) {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+
+    const currentPin = String(pins.current_pin || "");
+    const newPin = String(pins.new_pin || "");
+    const confirmNewPin = String(pins.confirm_new_pin || "");
+
+    if (!currentPin) {
+      setError("Informe o PIN atual.");
+      return;
+    }
+
+    if (!newPin) {
+      setError("Informe o novo PIN.");
+      return;
+    }
+
+    if (!/^\d+$/.test(newPin)) {
+      setError("O novo PIN deve conter apenas numeros.");
+      return;
+    }
+
+    if (!/^\d{4,8}$/.test(newPin)) {
+      setError("O novo PIN deve ter de 4 a 8 digitos.");
+      return;
+    }
+
+    if (newPin !== confirmNewPin) {
+      setError("A confirmacao do novo PIN nao confere.");
+      return;
+    }
+
+    setSavingPin(true);
+
+    try {
+      await api.post("/auth/change-pin", {
+        current_pin: currentPin,
+        new_pin: newPin
+      });
+      setPins({
+        current_pin: "",
+        new_pin: "",
+        confirm_new_pin: ""
+      });
+      setMessage("PIN alterado com sucesso.");
+    } catch (pinError) {
+      setError(getErrorMessage(pinError, "Nao foi possivel alterar o PIN."));
+    } finally {
+      setSavingPin(false);
     }
   }
 
@@ -118,6 +178,29 @@ export default function MyAccountPage() {
           <button type="submit" className="btn-primary" disabled={savingPassword}>
             <Save size={18} />
             <span>{savingPassword ? "Alterando" : "Alterar senha"}</span>
+          </button>
+        </form>
+
+        <form className="card space-y-4 p-5" onSubmit={changePin}>
+          <div className="flex items-center gap-3">
+            <KeyRound className="text-[color:var(--primary)]" size={22} />
+            <h2 className="text-xl font-black text-[color:var(--text)]">PIN de acesso</h2>
+          </div>
+          <label>
+            <span className="mb-2 block text-sm font-bold text-[color:var(--muted)]">PIN atual</span>
+            <input className="input" type="password" autoComplete="new-password" value={pins.current_pin} onChange={(event) => setPins((current) => Object.assign({}, current, { current_pin: event.target.value }))} required />
+          </label>
+          <label>
+            <span className="mb-2 block text-sm font-bold text-[color:var(--muted)]">Novo PIN</span>
+            <input className="input" type="password" autoComplete="new-password" value={pins.new_pin} onChange={(event) => setPins((current) => Object.assign({}, current, { new_pin: event.target.value }))} required />
+          </label>
+          <label>
+            <span className="mb-2 block text-sm font-bold text-[color:var(--muted)]">Confirmar novo PIN</span>
+            <input className="input" type="password" autoComplete="new-password" value={pins.confirm_new_pin} onChange={(event) => setPins((current) => Object.assign({}, current, { confirm_new_pin: event.target.value }))} required />
+          </label>
+          <button type="submit" className="btn-primary" disabled={savingPin}>
+            <Save size={18} />
+            <span>{savingPin ? "Alterando" : "Alterar PIN"}</span>
           </button>
         </form>
 
