@@ -108,7 +108,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <Login mode="common" />} />
-      <Route path="/admin-login" element={isAuthenticated ? <Navigate to="/" replace /> : <Login mode="admin" />} />
+      <Route path="/admin-login" element={<Navigate to="/login" replace />} />
       <Route path="/selecionar-usuario" element={isAuthenticated ? <Navigate to="/" replace /> : <UserSelector />} />
       <Route
         path="/"

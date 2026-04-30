@@ -35,6 +35,12 @@ async function authRequired(request, response, next) {
       });
     }
 
+    if (payload.token_type && payload.token_type !== "user") {
+      return response.status(401).json({
+        message: "Token de autenticação inválido ou expirado."
+      });
+    }
+
     const userId = Number(payload.sub || payload.user_id || payload.id);
 
     if (!Number.isInteger(userId) || userId <= 0) {

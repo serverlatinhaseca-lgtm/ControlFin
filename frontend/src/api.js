@@ -4,6 +4,8 @@ export const TOKEN_KEY = "controlfin_token";
 export const USER_KEY = "controlfin_user";
 export const SELECTOR_TOKEN_KEY = "controlfin_selector_token";
 export const SELECTOR_MODE_KEY = "controlfin_selector_mode";
+export const REMEMBER_SELECTOR_TOKEN_KEY = "controlfin_remember_selector_token";
+export const REMEMBER_SELECTOR_MODE_KEY = "controlfin_remember_selector_mode";
 
 export const api = axios.create({
   baseURL: "/api",
@@ -29,7 +31,7 @@ api.interceptors.response.use(
   (error) => {
     const status = error?.response?.status;
     const currentPath = window.location.pathname;
-    const isLoginFlow = currentPath === "/login" || currentPath === "/admin-login" || currentPath === "/selecionar-usuario";
+    const isLoginFlow = currentPath === "/login" || currentPath === "/selecionar-usuario";
 
     if (status === 401 && !isLoginFlow) {
       window.sessionStorage.removeItem(TOKEN_KEY);

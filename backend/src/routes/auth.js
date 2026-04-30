@@ -7,8 +7,10 @@ const { authRequired, getJwtSecret } = require("../middleware/auth");
 const router = express.Router();
 
 const SELECTOR_TOKEN_TTL = "10m";
+const REMEMBER_SELECTOR_TOKEN_TTL = "7d";
 const NORMAL_TOKEN_TTL = "8h";
 const SELECTOR_TOKEN_TYPE = "selector";
+const REMEMBER_SELECTOR_TOKEN_TYPE = "remember_selector";
 const DEFAULT_GENERAL_LOGIN_USER = "controlfin";
 const DEFAULT_GENERAL_LOGIN_PASSWORD_HASH = "$2a$10$EKEOhgGYTpz/NcMhxtMSV.097z83Dt1vOIQ31OMcPFZmg9POsZG32";
 const DEFAULT_ADMIN_LOGIN_USER = "admin";
@@ -59,6 +61,10 @@ function getSelectorSecret() {
   return `${getJwtSecret()}:selector`;
 }
 
+function getRememberSelectorSecret() {
+  return `${getJwtSecret()}:remember-selector`;
+}
+
 function createSelectorToken(mode) {
   const normalizedMode = normalizeMode(mode);
 
@@ -75,9 +81,58 @@ function createSelectorToken(mode) {
   );
 }
 
+function createRememberSelectorToken(mode, username) {
+  const normalizedMode = normalizeMode(mode);
+
+  return jwt.sign(
+    {
+      token_type: REMEMBER_SELECTOR_TOKEN_TYPE,
+      mode: normalizedMode,
+      username: String(username || "").trim()
+    },
+    getRememberSelectorSecret(),
+    {
+      subject: `remember-selector:${normalizedMode}`,
+      expiresIn: REMEMBER_SELECTOR_TOKEN_TTL
+    }
+  );
+}
+
+function validateRememberSelectorTokenValue(rememberToken) {
+  if (!rememberToken) {
+    const error = new Error("Sessao lembrada expirada.");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  try {
+    const decoded = jwt.verify(rememberToken, getRememberSelectorSecret());
+
+    if (decoded.token_type !== REMEMBER_SELECTOR_TOKEN_TYPE) {
+      const error = new Error("Sessao lembrada expirada.");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    return {
+      mode: normalizeMode(decoded.mode),
+      username: String(decoded.username || "").trim()
+    };
+  } catch (error) {
+    if (error.statusCode) {
+      throw error;
+    }
+
+    const wrappedError = new Error("Sessao lembrada expirada.");
+    wrappedError.statusCode = 401;
+    throw wrappedError;
+  }
+}
+
 function createUserToken(user) {
   return jwt.sign(
     {
+      token_type: "user",
       profile: user.profile,
       user_id: user.id
     },
@@ -251,10 +306,13 @@ router.post("/general-login", async (request, response, next) => {
       });
     }
 
+    const remember = Boolean(request.body.remember);
+
     return response.json({
       success: true,
       selector_token: createSelectorToken("common"),
-      mode: "common"
+      mode: "common",
+      ...(remember ? { remember_token: createRememberSelectorToken("common", request.body.username) } : {})
     });
   } catch (error) {
     return next(error);
@@ -271,12 +329,37 @@ router.post("/admin-general-login", async (request, response, next) => {
       });
     }
 
+    const remember = Boolean(request.body.remember);
+
     return response.json({
       success: true,
       selector_token: createSelectorToken("admin"),
-      mode: "admin"
+      mode: "admin",
+      ...(remember ? { remember_token: createRememberSelectorToken("admin", request.body.username) } : {})
     });
   } catch (error) {
+    return next(error);
+  }
+});
+
+
+router.post("/remember-selector", async (request, response, next) => {
+  try {
+    const rememberToken = String(request.body.remember_token || "");
+    const rememberedSession = validateRememberSelectorTokenValue(rememberToken);
+
+    return response.json({
+      success: true,
+      selector_token: createSelectorToken(rememberedSession.mode),
+      mode: rememberedSession.mode
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return response.status(error.statusCode).json({
+        message: error.message
+      });
+    }
+
     return next(error);
   }
 });
