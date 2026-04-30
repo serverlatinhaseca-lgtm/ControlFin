@@ -144,18 +144,24 @@ export function AuthProvider({ children }) {
     return nextUser;
   }, []);
 
-  const updateSidebarMode = useCallback(
-    async (sidebarMode) => {
-      const response = await api.put("/users/me/sidebar", {
-        sidebar_mode: sidebarMode
-      });
-      const nextUser = response.data.user || Object.assign({}, user, { sidebar_mode: response.data.sidebar_mode });
-      window.sessionStorage.setItem(USER_KEY, JSON.stringify(nextUser));
-      setUser(nextUser);
-      return nextUser;
-    },
-    [user]
-  );
+  const updateSidebarMode = useCallback(async (sidebarMode) => {
+    const response = await api.put("/users/me/sidebar", {
+      sidebar_mode: sidebarMode
+    });
+
+    const resolvedSidebarMode = response.data?.sidebar_mode || response.data?.user?.sidebar_mode || sidebarMode;
+    let resolvedUser = null;
+
+    setUser((currentUser) => {
+      resolvedUser = response.data?.user
+        ? Object.assign({}, response.data.user, { sidebar_mode: resolvedSidebarMode })
+        : Object.assign({}, currentUser || {}, { sidebar_mode: resolvedSidebarMode });
+      window.sessionStorage.setItem(USER_KEY, JSON.stringify(resolvedUser));
+      return resolvedUser;
+    });
+
+    return resolvedUser;
+  }, []);
 
   const value = useMemo(
     () => ({
