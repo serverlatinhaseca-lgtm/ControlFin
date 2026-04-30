@@ -8,7 +8,7 @@ const { authRequired, allowRoles } = require("../middleware/auth");
 
 const router = express.Router();
 const uploadsDir = path.join(process.cwd(), "uploads");
-const maxLogoSizeBytes = 2 * 1024 * 1024;
+const maxLogoSizeBytes = 5 * 1024 * 1024;
 const allowedMimeTypes = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp"]);
 const allowedExtensions = new Set([".png", ".jpg", ".jpeg", ".webp"]);
 
@@ -91,7 +91,7 @@ function runLogoUpload(request, response) {
     upload.single("file")(request, response, (error) => {
       if (error) {
         if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
-          const sizeError = new Error("A logo deve ter no máximo 2MB.");
+          const sizeError = new Error("A logo excede o limite. Tamanho máximo permitido: 5MB.");
           sizeError.statusCode = 400;
           reject(sizeError);
           return;
