@@ -37,6 +37,10 @@ export function AuthProvider({ children }) {
     window.sessionStorage.removeItem(USER_KEY);
     window.sessionStorage.removeItem(SELECTOR_TOKEN_KEY);
     window.sessionStorage.removeItem(SELECTOR_MODE_KEY);
+    window.localStorage.removeItem(REMEMBER_SELECTOR_TOKEN_KEY);
+    window.localStorage.removeItem(REMEMBER_SELECTOR_MODE_KEY);
+    window.localStorage.removeItem(TOKEN_KEY);
+    window.localStorage.removeItem(USER_KEY);
     setToken(null);
     setUser(null);
   }, []);
@@ -129,6 +133,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     clearSession();
+    window.location.assign("/login?logout=true");
   }, [clearSession]);
 
   const updateUser = useCallback(async (payload) => {
