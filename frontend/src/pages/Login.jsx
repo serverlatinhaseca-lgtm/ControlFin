@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { UserRound } from "lucide-react";
 import {
   api,
@@ -15,6 +15,7 @@ import ThemeToggle from "../components/ThemeToggle.jsx";
 
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { siteName, logoUrl } = useBranding();
   const { forgetRememberLogin } = useAuth();
   const [username, setUsername] = useState("controlfin");
@@ -23,14 +24,20 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [checkingRemember, setCheckingRemember] = useState(true);
-  const [hasRememberLogin, setHasRememberLogin] = useState(false);
 
   useEffect(() => {
     let active = true;
+    const isLogout = searchParams.get("logout") === "true";
+
+    if (isLogout) {
+      setCheckingRemember(false);
+      return () => {
+        active = false;
+      };
+    }
 
     async function restoreRememberedSelector() {
       const rememberToken = window.localStorage.getItem(REMEMBER_SELECTOR_TOKEN_KEY);
-      setHasRememberLogin(Boolean(rememberToken));
 
       if (!rememberToken) {
         if (active) {
@@ -56,7 +63,6 @@ export default function Login() {
       } catch (requestError) {
         if (active) {
           forgetRememberLogin();
-          setHasRememberLogin(false);
           setCheckingRemember(false);
         }
       }
@@ -67,7 +73,7 @@ export default function Login() {
     return () => {
       active = false;
     };
-  }, [forgetRememberLogin, navigate]);
+  }, [forgetRememberLogin, navigate, searchParams]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -105,10 +111,8 @@ export default function Login() {
       if (response.data.remember_token) {
         window.localStorage.setItem(REMEMBER_SELECTOR_TOKEN_KEY, response.data.remember_token);
         window.localStorage.setItem(REMEMBER_SELECTOR_MODE_KEY, mode);
-        setHasRememberLogin(true);
       } else {
         forgetRememberLogin();
-        setHasRememberLogin(false);
       }
 
       navigate(`/selecionar-usuario?mode=${mode}`);
@@ -196,19 +200,6 @@ export default function Login() {
                 <p className="text-sm font-semibold text-[color:var(--muted)]">Validando login salvo...</p>
               )}
 
-              {hasRememberLogin ? (
-                <button
-                  type="button"
-                  className="mt-6 text-sm font-black text-[color:var(--primary)] hover:text-[color:var(--primary-hover)]"
-                  onClick={() => {
-                    forgetRememberLogin();
-                    setHasRememberLogin(false);
-                    setRemember(false);
-                  }}
-                >
-                  Esquecer login salvo
-                </button>
-              ) : null}
             </div>
           </section>
         </div>
