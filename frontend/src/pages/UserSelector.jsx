@@ -57,7 +57,7 @@ export default function UserSelector() {
       const selectorToken = window.sessionStorage.getItem(SELECTOR_TOKEN_KEY);
 
       if (!selectorToken) {
-        navigate(mode === "admin" ? "/admin-login" : "/login", { replace: true });
+        navigate("/login", { replace: true });
         return;
       }
 
@@ -138,7 +138,7 @@ export default function UserSelector() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <ThemeToggle compact />
-            <Link to={mode === "admin" ? "/admin-login" : "/login"} className="btn-secondary">
+            <Link to="/login" className="btn-secondary">
               <ArrowLeft size={18} />
               <span>Voltar</span>
             </Link>
@@ -163,7 +163,7 @@ export default function UserSelector() {
           {error ? (
             <div className="card p-5">
               <p className="text-sm font-bold text-[color:var(--danger)]">{error}</p>
-              <Link to={mode === "admin" ? "/admin-login" : "/login"} className="btn-primary mt-4 inline-flex">
+              <Link to="/login" className="btn-primary mt-4 inline-flex">
                 Refazer login geral
               </Link>
             </div>

@@ -1,5 +1,14 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { api, TOKEN_KEY, USER_KEY, SELECTOR_TOKEN_KEY, SELECTOR_MODE_KEY, getErrorMessage } from "../api.js";
+import {
+  api,
+  TOKEN_KEY,
+  USER_KEY,
+  SELECTOR_TOKEN_KEY,
+  SELECTOR_MODE_KEY,
+  REMEMBER_SELECTOR_TOKEN_KEY,
+  REMEMBER_SELECTOR_MODE_KEY,
+  getErrorMessage
+} from "../api.js";
 
 const AuthContext = createContext(null);
 
@@ -113,6 +122,11 @@ export function AuthProvider({ children }) {
     [persistSession]
   );
 
+  const forgetRememberLogin = useCallback(() => {
+    window.localStorage.removeItem(REMEMBER_SELECTOR_TOKEN_KEY);
+    window.localStorage.removeItem(REMEMBER_SELECTOR_MODE_KEY);
+  }, []);
+
   const logout = useCallback(() => {
     clearSession();
   }, [clearSession]);
@@ -135,9 +149,10 @@ export function AuthProvider({ children }) {
       logout,
       refreshMe,
       updateUser,
+      forgetRememberLogin,
       isAuthenticated: Boolean(token && user)
     }),
-    [completeLogin, loading, login, logout, refreshMe, token, updateUser, user]
+    [completeLogin, forgetRememberLogin, loading, login, logout, refreshMe, token, updateUser, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
