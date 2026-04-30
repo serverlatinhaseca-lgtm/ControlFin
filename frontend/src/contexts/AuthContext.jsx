@@ -41,8 +41,6 @@ export function AuthProvider({ children }) {
       window.localStorage.removeItem(REMEMBER_SELECTOR_TOKEN_KEY);
       window.localStorage.removeItem(REMEMBER_SELECTOR_MODE_KEY);
     }
-    window.localStorage.removeItem(TOKEN_KEY);
-    window.localStorage.removeItem(USER_KEY);
     setToken(null);
     setUser(null);
   }, []);
