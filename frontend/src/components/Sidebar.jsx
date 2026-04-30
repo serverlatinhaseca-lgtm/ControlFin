@@ -67,19 +67,20 @@ const menus = {
   ]
 };
 
-export default function Sidebar({ mode = "fixed" }) {
+export default function Sidebar() {
   const { user, updateSidebarMode } = useAuth();
   const { siteName, logoUrl } = useBranding();
   const items = menus[user?.profile] || menus.ATENDENTE;
-  const sidebarMode = mode === "floating" ? "floating" : "fixed";
+  const sidebarMode = user?.sidebar_mode || "fixed";
+  const isFloating = sidebarMode === "floating";
 
   async function handleToggleSidebarMode() {
-    const nextMode = sidebarMode === "floating" ? "fixed" : "floating";
+    const nextMode = sidebarMode === "fixed" ? "floating" : "fixed";
     await updateSidebarMode(nextMode);
   }
 
   return (
-    <aside className={`sidebar-shell sidebar-${sidebarMode}`} aria-label="Menu principal">
+    <aside className={`sidebar-shell ${isFloating ? "sidebar-floating" : "sidebar-fixed"}`} aria-label="Menu principal" data-sidebar-mode={sidebarMode}>
       <div className="sidebar-brand">
         {logoUrl ? (
           <img src={logoUrl} alt={siteName} className="sidebar-logo" />
@@ -93,7 +94,7 @@ export default function Sidebar({ mode = "fixed" }) {
       </div>
       <nav className="sidebar-nav">
         {items.map(([label, path, Icon]) => (
-          <NavLink key={path} to={path} title={sidebarMode === "floating" ? label : undefined} className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
+          <NavLink key={path} to={path} title={isFloating ? label : undefined} className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
             <Icon className="sidebar-icon" size={19} />
             <span className="sidebar-link-text">{label}</span>
           </NavLink>
@@ -104,10 +105,10 @@ export default function Sidebar({ mode = "fixed" }) {
           type="button"
           className="sidebar-mode-toggle"
           onClick={handleToggleSidebarMode}
-          title={sidebarMode === "floating" ? "Fixar barra" : "Modo flutuante"}
+          title={isFloating ? "Fixar barra" : "Modo flutuante"}
         >
-          {sidebarMode === "floating" ? <Pin className="sidebar-icon" size={18} /> : <PanelLeft className="sidebar-icon" size={18} />}
-          <span className="sidebar-link-text">{sidebarMode === "floating" ? "Fixar barra" : "Modo flutuante"}</span>
+          {isFloating ? <Pin className="sidebar-icon" size={18} /> : <PanelLeft className="sidebar-icon" size={18} />}
+          <span className="sidebar-link-text">{isFloating ? "Fixar barra" : "Modo flutuante"}</span>
         </button>
       </div>
     </aside>
