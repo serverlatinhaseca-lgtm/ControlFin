@@ -9,8 +9,8 @@ const { authRequired, allowRoles } = require("../middleware/auth");
 const router = express.Router();
 const uploadsDir = path.join(process.cwd(), "uploads");
 const maxLogoSizeBytes = 2 * 1024 * 1024;
-const allowedMimeTypes = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"]);
-const allowedExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".svg"]);
+const allowedMimeTypes = new Set(["image/png", "image/jpeg", "image/jpg", "image/webp"]);
+const allowedExtensions = new Set([".png", ".jpg", ".jpeg", ".webp"]);
 
 fs.mkdirSync(uploadsDir, { recursive: true });
 
@@ -37,7 +37,7 @@ const upload = multer({
     const extension = path.extname(file.originalname || "").toLowerCase();
 
     if (!allowedMimeTypes.has(file.mimetype) || !allowedExtensions.has(extension)) {
-      const error = new Error("Arquivo de logo inválido. Envie png, jpg, jpeg, webp ou svg.");
+      const error = new Error("Arquivo de logo inválido. Envie png, jpg, jpeg ou webp.");
       error.statusCode = 400;
       return callback(error);
     }
