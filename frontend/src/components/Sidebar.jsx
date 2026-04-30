@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   BarChart3,
@@ -8,6 +8,7 @@ import {
   FileText,
   LayoutDashboard,
   ListChecks,
+  Loader2,
   PanelLeft,
   Pin,
   Settings,
@@ -67,48 +68,63 @@ const menus = {
   ]
 };
 
-export default function Sidebar({ mode = "fixed" }) {
+export default function Sidebar() {
   const { user, updateSidebarMode } = useAuth();
   const { siteName, logoUrl } = useBranding();
+  const [savingMode, setSavingMode] = useState(false);
+  const [toggleError, setToggleError] = useState("");
   const items = menus[user?.profile] || menus.ATENDENTE;
-  const sidebarMode = mode === "floating" ? "floating" : "fixed";
+  const currentMode = user?.sidebar_mode === "floating" ? "floating" : "fixed";
+  const nextMode = currentMode === "fixed" ? "floating" : "fixed";
 
   async function handleToggleSidebarMode() {
-    const nextMode = sidebarMode === "floating" ? "fixed" : "floating";
-    await updateSidebarMode(nextMode);
+    if (savingMode) {
+      return;
+    }
+
+    setSavingMode(true);
+    setToggleError("");
+
+    try {
+      await updateSidebarMode(nextMode);
+    } catch (error) {
+      setToggleError("Nao foi possivel alterar a barra lateral.");
+    } finally {
+      setSavingMode(false);
+    }
   }
 
   return (
-    <aside className={`sidebar-shell sidebar-${sidebarMode}`} aria-label="Menu principal">
+    <aside className={`sidebar ${currentMode === "floating" ? "sidebar-floating" : "sidebar-fixed"}`} aria-label="Menu principal">
       <div className="sidebar-brand">
-        {logoUrl ? (
-          <img src={logoUrl} alt={siteName} className="sidebar-logo" />
-        ) : (
-          <div className="sidebar-logo-fallback">CF</div>
-        )}
+        {logoUrl ? <img src={logoUrl} alt={siteName} className="sidebar-logo" /> : <div className="sidebar-logo-fallback">CF</div>}
         <div className="sidebar-brand-text">
           <p className="sidebar-site-name">{siteName}</p>
           <p className="sidebar-site-subtitle">Gestao financeira</p>
         </div>
       </div>
+
       <nav className="sidebar-nav">
         {items.map(([label, path, Icon]) => (
-          <NavLink key={path} to={path} title={sidebarMode === "floating" ? label : undefined} className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
+          <NavLink key={path} to={path} title={currentMode === "floating" ? label : undefined} className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`}>
             <Icon className="sidebar-icon" size={19} />
             <span className="sidebar-link-text">{label}</span>
           </NavLink>
         ))}
       </nav>
+
       <div className="sidebar-footer">
         <button
           type="button"
           className="sidebar-mode-toggle"
           onClick={handleToggleSidebarMode}
-          title={sidebarMode === "floating" ? "Fixar barra" : "Modo flutuante"}
+          disabled={savingMode}
+          title={currentMode === "floating" ? "Fixar barra" : "Modo flutuante"}
         >
-          {sidebarMode === "floating" ? <Pin className="sidebar-icon" size={18} /> : <PanelLeft className="sidebar-icon" size={18} />}
-          <span className="sidebar-link-text">{sidebarMode === "floating" ? "Fixar barra" : "Modo flutuante"}</span>
+          {savingMode ? <Loader2 className="sidebar-icon animate-spin" size={18} /> : currentMode === "floating" ? <Pin className="sidebar-icon" size={18} /> : <PanelLeft className="sidebar-icon" size={18} />}
+          <span className="sidebar-link-text">{currentMode === "floating" ? "Fixar barra" : "Modo flutuante"}</span>
         </button>
+        {toggleError ? <p className="sidebar-toggle-error">{toggleError}</p> : null}
       </div>
     </aside>
   );
