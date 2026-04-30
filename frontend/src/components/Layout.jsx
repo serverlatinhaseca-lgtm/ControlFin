@@ -13,7 +13,7 @@ export default function Layout() {
       <Sidebar mode={sidebarMode} />
       <div className="layout-content">
         <Header />
-        <main className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8">
+        <main className="layout-main mx-auto w-full max-w-7xl px-4 py-6 lg:px-8">
           <Outlet />
         </main>
       </div>
