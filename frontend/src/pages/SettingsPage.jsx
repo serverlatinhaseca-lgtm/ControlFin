@@ -152,6 +152,7 @@ export default function SettingsPage() {
               </div>
             </div>
             <div className="mt-5 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)] p-4 text-sm font-semibold text-[color:var(--muted)]">
+              Formatos aceitos: PNG, JPG, JPEG ou WEBP. Tamanho máximo: 5MB.
               Formatos aceitos: png, jpg, jpeg e webp. Tamanho máximo: 2MB.
             </div>
           </aside>
