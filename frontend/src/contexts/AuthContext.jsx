@@ -144,18 +144,23 @@ export function AuthProvider({ children }) {
     return nextUser;
   }, []);
 
-  const updateSidebarMode = useCallback(
-    async (sidebarMode) => {
-      const response = await api.put("/users/me/sidebar", {
+  const updateSidebarMode = useCallback(async (nextMode) => {
+    const response = await api.put("/users/me/sidebar", {
+      sidebar_mode: nextMode
+    });
+
+    const sidebarMode = response.data.sidebar_mode || nextMode;
+
+    setUser((currentUser) => {
+      const updatedUser = {
+        ...(currentUser || user),
         sidebar_mode: sidebarMode
-      });
-      const nextUser = response.data.user || Object.assign({}, user, { sidebar_mode: response.data.sidebar_mode });
-      window.sessionStorage.setItem(USER_KEY, JSON.stringify(nextUser));
-      setUser(nextUser);
-      return nextUser;
-    },
-    [user]
-  );
+      };
+
+      window.sessionStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+      return updatedUser;
+    });
+  }, [user]);
 
   const value = useMemo(
     () => ({

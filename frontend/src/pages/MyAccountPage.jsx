@@ -34,7 +34,7 @@ export default function MyAccountPage() {
     setMessage("");
 
     try {
-      await updateUser({ name, theme_mode: theme, sidebar_mode: user?.sidebar_mode || "fixed" });
+      await updateUser({ name, theme_mode: theme });
       setMessage("Dados atualizados com sucesso.");
     } catch (saveError) {
       setError(getErrorMessage(saveError, "Nao foi possivel atualizar usuario."));
