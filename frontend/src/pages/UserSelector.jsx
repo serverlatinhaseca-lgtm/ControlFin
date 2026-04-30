@@ -1,7 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ShieldCheck, UserRound } from "lucide-react";
-import { api, SELECTOR_MODE_KEY, SELECTOR_TOKEN_KEY, getErrorMessage } from "../api.js";
+import {
+  api,
+  SELECTOR_MODE_KEY,
+  SELECTOR_TOKEN_KEY,
+  TOKEN_KEY,
+  USER_KEY,
+  REMEMBER_SELECTOR_MODE_KEY,
+  REMEMBER_SELECTOR_TOKEN_KEY,
+  getErrorMessage
+} from "../api.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useBranding } from "../contexts/BrandingContext.jsx";
 import ThemeToggle from "../components/ThemeToggle.jsx";
@@ -92,6 +101,18 @@ export default function UserSelector() {
     };
   }, [mode, navigate]);
 
+  function handleBackToLogin() {
+    window.sessionStorage.removeItem(SELECTOR_TOKEN_KEY);
+    window.sessionStorage.removeItem(SELECTOR_MODE_KEY);
+    window.sessionStorage.removeItem(TOKEN_KEY);
+    window.sessionStorage.removeItem(USER_KEY);
+    window.localStorage.removeItem(REMEMBER_SELECTOR_TOKEN_KEY);
+    window.localStorage.removeItem(REMEMBER_SELECTOR_MODE_KEY);
+    window.localStorage.removeItem(TOKEN_KEY);
+    window.localStorage.removeItem(USER_KEY);
+    navigate("/login?back=true", { replace: true });
+  }
+
   async function handlePinConfirm(pin) {
     const selectorToken = window.sessionStorage.getItem(SELECTOR_TOKEN_KEY);
 
@@ -138,10 +159,10 @@ export default function UserSelector() {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <ThemeToggle compact />
-            <Link to="/login" className="btn-secondary">
+            <button type="button" onClick={handleBackToLogin} className="btn-secondary">
               <ArrowLeft size={18} />
               <span>Voltar</span>
-            </Link>
+            </button>
           </div>
         </header>
 
